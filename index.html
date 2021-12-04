@@ -1,18 +1,15 @@
-<!doctype html>
-
 <html lang="en">
 <head>
-  <link rel="canonical" href="https://itinerarium.github.io/phoneme-synthesis/" />
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
 
-  <title>Convert IPA phonetic notation text to speech</title>
-  <meta name="description" content="A browser-based tool to convert International Phonetic Alphabet (IPA) phonetic notation to speech using the meSpeak.js package.">
+  <title>Convert toki pona text to speech</title>
+  <meta name="description" content="a browser based tool to render toki pona text to a very robotic audio.">
 
   <style type="text/css">
   html {
     font-family: Helvetica, sans-serif;
-    background-color: #404040;
+    background-color: #ffd;
     min-width: 320px;
   }
   * {
@@ -25,7 +22,7 @@
     line-height: 1.5;
     margin: 0 auto;
     padding: 1em;
-    background-color: #f3f3f3;
+    background-color: #aaf;
   }
 
   @media screen and (max-width: 640px) {
@@ -39,6 +36,10 @@
     padding: 1em;
   }
 
+  div#tool {
+    text-align:center;
+  }
+
   div#tool, div#about, div#note {
     background-color: #ffffff;
     padding: 1em;
@@ -48,20 +49,17 @@
     margin-bottom: 1em;
   }
 
-  input#ipa-input {
-    width: 240px;
-    text-align: center;
+  textarea#ipa-input {
+    min-height: 124px;
+    min-width: 248px;
     display: block;
     margin: 0 auto;
   }
-  input#submit, input#download-button, input#copy-link-button {
+  input#submit, input#download-button, textarea#ipa-input {
     width: 248px;
     text-align: center;
     display: block;
     margin: 1em auto;
-  }
-  input#copy-link-button {
-    margin-bottom: 0;
   }
   hr {
     border: 0;
@@ -76,18 +74,45 @@
   <script type="text/javascript">
     meSpeak.loadConfig("mespeak_config.json");
     meSpeak.loadVoice("en.json");
+    meSpeak.setVolume(0.5);
   </script>
 </head>
 
 <body>
   <div id="container">
-    <h1>phoneme synthesis</h1>
+    <h1>toki pona text-to-speech</h1>
     <noscript>
-      <p><strong>A modern JavaScript-enabled browser is required.</strong> As an alternative, consider using <a href="http://ssb22.user.srcf.net/gradint/lexconvert.html">lexconvert</a> in conjunction with <a href="http://espeak.sourceforge.net/">eSpeak</a>.</p>
-      <p>Sample command for <a href="https://en.wikipedia.org/wiki/Mumbai" rel="nofollow">Mumbai</a>:<br /><span style="font-family: monospace;">python lexconvert.py --try unicode-ipa "/mʊmˈbaɪ/"</span></p>
+      <p><strong>A modern JavaScript-enabled browser is required.</strong></p>
     </noscript>
 
     <script type="text/javascript">
+
+
+    // hack to add toki pona stress, punctuation stops.
+    function toTokiPona(text) {
+          // no uppercase bc it means diff stuff in ipa
+          text = text.toLowerCase();
+          // display little message for the folks who try to pronouce yupekosi
+          if(text.includes("y")) {
+                document.getElementById("yupekosi").style.display="inline";
+          }
+          // replace all punctuation with glottal stop as an awful hack to have a pause
+          text = text.replaceAll(/[.?!]/g, "ʔʔʔ"); 
+          text = text.replaceAll(/,/g, "ʔ"); 
+          // replace any nonvalid toki pona characters with nothing
+          // hyphens are left in because  hyphenated proper names
+          text = text.replaceAll(/[^-yaeioujklmnpstwʔ\s]/g,"");
+          
+          // nobody knows how to pronounce the y :)
+          text = text.replaceAll(/y/g, "xdzx-"); 
+          // replace starts of words with ' to signify that's where the stress lands
+          text = text.replaceAll(/(^|-|\s)+/g,"$&'");
+
+          console.log(text);
+
+          return text;
+    }
+
     var spoken;
 
     // download function from Matěj Pokorný: https://stackoverflow.com/questions/2897619/using-html5-javascript-to-generate-and-save-a-file/18197511#18197511    
@@ -110,23 +135,8 @@
       document.getElementById("download-button").disabled = true;
     }
 
-    function copyToClipboard(text) {
-      t = document.createElement('input');
-      t.value = text;
-      document.body.appendChild(t);
-      t.select();
-      document.execCommand('copy');
-      document.body.removeChild(t);
-    }
-
-    function copy_link_button() {
-      uipa = document.getElementById("ipa-input").value;
-      url = window.location.href.split('?')[0] + "?w=" + uipa;
-      copyToClipboard(url);
-    }
-
     function process() {
-      uipa = document.getElementById("ipa-input").value;
+      uipa = document.getElementById("ipa-input").value.replaceAll(/\n/g,". ").replace(/$/, "");
 
       document.getElementById("download-button").disabled = true;
 
@@ -134,6 +144,8 @@
       if (uipa == null || uipa.length == 0) {
         return;
       }
+
+      uipa = toTokiPona(uipa);
 
       //translate
       var mappings = [
@@ -261,10 +273,11 @@
         uipa = uipa.replace(mappings[i].src, mappings[i].dest);
         //console.log(mappings[i].src + uipa);
       }
-      console.log(uipa);
-      spoken = meSpeak.speak('[['+uipa+']]', { 'rawdata': 'mime' });
+      //console.log(uipa);
+
+            spoken = meSpeak.speak('[['+uipa+']]', { 'rawdata': 'mime',  'pitch': '60' , 'speed' : '140', 'wordgap' : '0'});
       if (spoken == null) {
-        alert("An error occurred: speaking failed.");
+        alert("An error occurred: speaking failed. You may need to wait a second for everything to load and then try again.");
       }
 
       document.getElementById("download-button").disabled = false;
@@ -275,59 +288,25 @@
 
 
     <div id="tool">
-    <p style="text-align: center;"><em>Convert <abbr title="International Phonetic Alphabet">IPA</abbr> phonetic notation to speech</em></p>
+    <p><em>Convert toki pona text to speech</em></p>
     <form onsubmit="process(); return false;">
-      <input id="ipa-input" onchange="clear_download_button(); return false;" type="text" value="/mʊmˈbaɪ/" />
+     <textarea id="ipa-input" onchange="clear_download_button(); return false;">toki! mi ilo pi toki kalama. sina sitelen lon mi la, sina kute e kalama pi sitelen sina</textarea>
       <input id="submit" onclick="process(); return false;" type="button" value="pronounce" />
       <input id="download-button" onclick="download(); return false;" type="button" disabled="disabled" value="download pronunciation" />
-      <input id="copy-link-button" onclick="copy_link_button(); return false;" type="button" value="copy share url" />
     </form>
+    <p id="yupekosi" style="display:none"><strong style="color:blue">nobody knows how to pronounce the y :)</strong></p>
     </div>
-  
     <hr />
-
     <div id="about">
       <h2>how does it work?</h2>
-      <p>Using the computational capabilities exposed by your browser's JavaScript processor, the <abbr title="International Phonetic Alphabet">IPA</abbr> phonetic notation is translated into phonemes understood by <a href="http://espeak.sourceforge.net/" rel="nofollow">eSpeak</a> using correspondences and logic found in <a href="http://ssb22.user.srcf.net/gradint/lexconvert.html">lexconvert</a>. The translated phonemes (e.g., [[mUm'baI]] for /mʊmˈbaɪ/) are then provided to <a href="http://www.masswerk.at/mespeak/" rel="nofollow">meSpeak.js</a>, a revised <a href="http://emscripten.org/" rel="nofollow">Emscripten'd</a> version of eSpeak for output. Once the output has been generated, the pronunciation in <abbr title="Waveform Audio File">WAV</abbr> format is downloadable.</p>
-      <p>As this processing takes place within your browser, this page may be downloaded and used offline. By extension, the requested pronunciations are not logged.</p>
-
-      <h2>improve this tool</h2>
-      <p><strong>Contribute via <a href="https://github.com/itinerarium/phoneme-synthesis/">GitHub</a>.</strong></p>
-      <p><strong>Report a bug.</strong> Be sure to include the problematic input, your browser version (Help > About), operating system version, and device type. File <a href="https://github.com/itinerarium/phoneme-synthesis/issues">an issue on GitHub</a> or send an e-mail.</p>
-      <p><strong>Enrich the <abbr title="International Phonetic Alphabet">IPA</abbr>-phoneme correspondence list.</strong> For English, eSpeak recognizes 96 phonemes (<span style="font-family: monospace;">dictsource/dict_phonemes</span>). Currently, only 55 are mapped using lexconvert and there may have been mistakes in interpreting lexconvert's conversion scheme. Additional correspondences should improve pronunciation.</p>
-      <p><strong>Contribute to the underlying libraries.</strong> eSpeak, meSpeak.js, or the most current Emscripten'd variation to improve performance/size. meSpeak.js is currently over two megabytes.</p>
-
+      <p>some <a href="https://github.com/itinerarium/phoneme-synthesis/">some cool person</a>  wrote some code to convert IPA to phonemes that <a href="http://espeak.sourceforge.net/" rel="nofollow">eSpeak</a> can use by using <a href="http://ssb22.user.srcf.net/gradint/lexconvert.html">lexconvert</a>. They also wrote code that passed the phonemes to <a href="http://www.masswerk.at/mespeak/" rel="nofollow">meSpeak.js</a>, a <a href="http://emscripten.org/" rel="nofollow">Emscripten</a> version of eSpeak that works in web browsers. Since toki pona pronunciation is just IPA with the stress falling on the first syllable of each word, i hacked some terrible code together to add the IPA markup for stress before passing to their code. the result is some old-school text-to-speech synthesis for toki pona. </p>
       <h2>about</h2>
-      <p>This browser-based tool integrates GPL-licensed <a href="http://www.masswerk.at/mespeak/" rel="nofollow">meSpeak.js</a> (a revised <a href="http://emscripten.org/" rel="nofollow">Emscripten'd</a> version of <a href="http://espeak.sourceforge.net/" rel="nofollow">eSpeak</a>) and correspondences from <a href="http://ssb22.user.srcf.net/gradint/lexconvert.html">lexconvert</a> to parse <abbr title="International Phonetic Alphabet">IPA</abbr> phonetic notation and convert it to speech.</p>
-      <p>This tool is also available at &lt;<a href="https://www.0n0e.com/public/phoneme-synthesis/">https://www.0n0e.com/public/phoneme-synthesis/</a>&gt;.</p>
+      <p>this tool is a fork of the <a href="https://github.com/itinerarium/phoneme-synthesis/">phoneme synthesis project</a>. as such, this project is also licenced under the <a href="LICENSE">GPL</a>. you can view this page's source code on <a href="https://github.com/wasolili/phoneme-synthesis">Github</a> too.</p>
 
-      <h2>contact</h2>
-      <p style="margin-bottom: 0;">person at 0n0e dot com</p>
+      <p>view the project this is forked from here: <a href="https://itinerarium.github.io/phoneme-synthesis/">https://itinerarium.github.io/phoneme-synthesis/</a></p>
+
     </div>
-
     <hr />
-    <div id="note">
-      <h2>note</h2>
-      <p>It was odd that this tool did not exist; the underlying components were free (as in beer and freedom) and readily available for years (eSpeak was Emscripten'd in 2011: <a href="https://github.com/kripken/speak.js/" rel="nofollow">speak.js</a>) alongside clear demand (e.g., in 2013, <a href="https://www.reddit.com/r/linguistics/comments/1qdpoo/ipa_text_to_speech/" rel="nofollow">r/linguistics</a> and <a href="https://linguistics.stackexchange.com/questions/3035/is-it-hard-for-software-speech-synthesisers-to-handle-ipa-if-so-why" rel="nofollow">Linguistics Stack Exchange</a>).</p>
-      <p>There was a <a href="http://johntantalo.com/blog/ipa-tts-bookmarklet/" rel="nofollow">bookmarket for AT&amp;T's Natural Voices demo</a>, but the endpoint appears to be no longer available.</p>
-      <p>eSpeak, unfortunately, does not parse <abbr title="International Phonetic Alphabet">IPA</abbr> phonetic notation directly, requiring the conversion assisted by lexconvert. Although the Emscripten'd version of eSpeak is somewhat large, two megabytes has become less noticeable as page sizes have increased over time. As a side effect, with no server-side processing and no automatic processing, privacy and security considerations were simplified (with the assumption that meSpeak.js is trustworthy).</p>
-      <p style="margin-bottom: 0;">Last updated: 2017-01-04</p>
-    </div>
   </div>
-  <script type="text/javascript">
-    function is_valid_input(i) {
-      return !(i.includes("<") || i.includes(">") || i.length > 200)
-    }
-
-    (function() {
-      var urlParams = new URLSearchParams(window.location.search);
-      if(urlParams.has('w')) {
-	var word = urlParams.get('w');
-	if(is_valid_input(word)) {
-          document.getElementById("ipa-input").value = word;
-	}
-      }
-    })();
-  </script>
 </body>
 </html>
