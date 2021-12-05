@@ -62,8 +62,8 @@
     margin: 1em auto;
   }
   hr {
-    border: 0;
-    height: 1em;
+   border-color: #aaf;
+    margin: 1em;
   }
   h2 {
     margin-bottom: 0.35em;
@@ -108,7 +108,7 @@
           // replace starts of words with ' to signify that's where the stress lands
           text = text.replaceAll(/(^|-|\s)+/g,"$&'");
 
-          console.log(text);
+          //console.log(text);
 
           return text;
     }
@@ -275,7 +275,7 @@
       }
       //console.log(uipa);
 
-            spoken = meSpeak.speak('[['+uipa+']]', { 'rawdata': 'mime',  'pitch': '60' , 'speed' : '140', 'wordgap' : '0'});
+            spoken = meSpeak.speak('[['+uipa+']]', { 'rawdata': 'mime',  'pitch': document.getElementById('word-pitch').value , 'speed' : document.getElementById('word-speed').value, 'wordgap' : document.getElementById("word-gap").value});
       if (spoken == null) {
         alert("An error occurred: speaking failed. You may need to wait a second for everything to load and then try again.");
       }
@@ -293,10 +293,14 @@
      <textarea id="ipa-input" onchange="clear_download_button(); return false;">toki! mi ilo pi toki kalama. sina sitelen lon mi la, sina kute e kalama pi sitelen sina</textarea>
       <input id="submit" onclick="process(); return false;" type="button" value="pronounce" />
       <input id="download-button" onclick="download(); return false;" type="button" disabled="disabled" value="download pronunciation" />
+      <hr />
+      Pitch: <input id="word-pitch" type="number"  value="60" />
+      Speed: <input id="word-speed" type="number"  value="140" />
+      Word Gap: <input id="word-gap" type="number"  value="0" />
     </form>
     <p id="yupekosi" style="display:none"><strong style="color:blue">nobody knows how to pronounce the y :)</strong></p>
     </div>
-    <hr />
+    <br />
     <div id="about">
       <h2>how does it work?</h2>
       <p>some <a href="https://github.com/itinerarium/phoneme-synthesis/">some cool person</a>  wrote some code to convert IPA to phonemes that <a href="http://espeak.sourceforge.net/" rel="nofollow">eSpeak</a> can use by using <a href="http://ssb22.user.srcf.net/gradint/lexconvert.html">lexconvert</a>. They also wrote code that passed the phonemes to <a href="http://www.masswerk.at/mespeak/" rel="nofollow">meSpeak.js</a>, a <a href="http://emscripten.org/" rel="nofollow">Emscripten</a> version of eSpeak that works in web browsers. Since toki pona pronunciation is just IPA with the stress falling on the first syllable of each word, i hacked some terrible code together to add the IPA markup for stress before passing to their code. the result is some old-school text-to-speech synthesis for toki pona. </p>
